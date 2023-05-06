@@ -1,5 +1,20 @@
 import pygame as pg, math, sys
 
+class Planet_info:
+    def check(self, rect_list, pressed, planet_names, planet_box):
+        n = 0
+        for i in rect_list:
+            if pg.Rect.collidepoint(i, pg.mouse.get_pos()) and pg.mouse.get_pressed()[0] and pressed == False:
+                for y in range(len(planet_box)):
+                    planet_box[y] = False
+                pressed = True
+                #print(planet_names[n+1])
+                planet_box[n] = True
+            n += 1
+        if pg.mouse.get_pressed()[0] == False:
+            pressed = False
+        return planet_box
+
 class Planet:
     AU = 149.6e6*1000 # in meter
     G = 6.67428e-11
@@ -16,7 +31,7 @@ class Planet:
         self.mass = mass
         self.ring = False
         
-        self.sun = False # needed for the orbit
+        self.sun = False
         self.dist_to_sun = 0
         
         self.x_vel = 0
@@ -25,8 +40,8 @@ class Planet:
     def draw(self, display, planet, planet_name, size):
         x = self.x * self.SCALE + size[0] / 2
         y = self.y * self.SCALE + size[1] / 2
-        
-        pg.draw.circle(display, self.color, (x, y), self.radius)
+        if x > -20:
+            pg.draw.circle(display, self.color, (x, y), self.radius)
         
         if self.ring:
             pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
@@ -36,7 +51,6 @@ class Planet:
             display.blit(distance_text, (0, 32*(planet-1)))
     
     def mini_draw(self, display, size):
-        #display.fill((0,0,0))
         x = self.x * self.MINI_SCALE + size[0] / 2
         y = self.y * self.MINI_SCALE + size[1] / 2
         if x > -20:
@@ -77,8 +91,6 @@ class Planet:
         
         self.x += self.x_vel * self.TIMESTEP
         self.y += self.y_vel * self.TIMESTEP
-        
-        #self.orbit.append((self.x, self.y))
         
 class App:
     def __init__(self):
@@ -128,19 +140,35 @@ class App:
         neptune.y_vel = -5.43e3
         
         self.planets = [star, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
+        self.rect_list = []
+        self.planet_boxes = []
+        for i in range(0, len(self.planets)-1):
+            self.rect_list.append(pg.Rect(0,32*i+20, 200, 32))
+        
+        for i in range(0, len(self.planets)-1):
+            self.planet_boxes.append(False)
+        
         self.planet_names = ["sun", "mercury", "venus","earth", "mars", "jupiter", "saturn", "uranus", "neptun"]
         self.sun_lock = True
         
         self.res = self.width, self.height = 1600, 900
         self.clock = pg.time.Clock()
         self.screen = pg.display.set_mode(self.res)
+        self.tool_bar = pg.Surface((self.width, 20))
+        self.main_display = pg.Surface((self.width, self.height-20))
         self.display = pg.Surface((417,417))
+        
+        self.mouse_pressed = False
+        
+        self.planet_box = Planet_info()
+        
         pg.display.set_caption("solar sim")
     
     def run(self):
         while True:
-            self.screen.fill(self.color["black"])
+            self.main_display.fill(self.color["black"])
             self.display.fill(self.color["black"])
+            self.tool_bar.fill(self.color["white"])
             n = 0
             if self.sun_lock:
                 self.planets[0].x = 0
@@ -148,24 +176,28 @@ class App:
             
             for planet in self.planets:
                 planet.update(self.planets)
-                planet.draw(self.screen, n, self.planet_names[n], (900,900))
+                planet.draw(self.main_display, n, self.planet_names[n], (900,900))
                 planet.mini_draw(self.display, (417,417))
                 n += 1
-            pg.draw.rect(self.screen, self.color["gray"], (422,422,52,52))
-            pg.draw.rect(self.screen, self.color["black"], (423,423,50,50))
             
-            pg.draw.rect(self.screen, self.color["gray"], (1099,39,419,419))
-            self.screen.blit(self.display,(1100,40))
+            pg.draw.rect(self.main_display, self.color["gray"], (422,422,52,52))
+            pg.draw.rect(self.main_display, self.color["black"], (423,423,50,50))
             
+            pg.draw.rect(self.main_display, self.color["gray"], (1099,39,419,419))
+            self.main_display.blit(self.display,(1100,40))
+            self.screen.blit(self.tool_bar,(0,0))
+            self.screen.blit(self.main_display,(0,20))
             
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                    sys.exit()    
-                    
+                    sys.exit()
+                
+                self.planet_boxes = self.planet_box.check(self.rect_list, self.mouse_pressed, self.planet_names, self.planet_boxes)
+            print(self.planet_boxes) 
             self.clock.tick()
-            pg.display.update()                        
-   
+            pg.display.update()
+
 if __name__ == "__main__":
     app = App()
     app.run()

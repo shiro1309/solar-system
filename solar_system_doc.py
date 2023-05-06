@@ -1,94 +1,117 @@
 import pygame as pg, math, sys
 
+class Planet_info:
+    def check(self, rect_list, pressed, planet_names, planet_box):
+        n = 0
+        for i in rect_list:
+            if pg.Rect.collidepoint(i, pg.mouse.get_pos()) and pg.mouse.get_pressed()[0] and pressed == False:
+                for y in range(len(planet_box)):
+                    planet_box[y] = False
+                pressed = True
+                
+                planet_box[n] = True
+            n += 1
+        if pg.mouse.get_pressed()[0] == False:
+            pressed = False
+        return planet_box
+
+    def tool_bar(self, box_list, func_list, tool_bar_surf):
+        pass
+
+    def box_click(self, point, box, func):
+        if pg.Rect.collidepoint(box, point):
+            func()
+
 class Planet:
-    AU = 149.6e6*1000 # 1 AU
-    G = 6.67428e-11 # gravitatinal constant
-    SCALE = 12 / AU # how many pixels per 1 AU
-    MINI_SCALE = 100 /AU # how many pixels per 1 AU
-    TIMESTEP = 3600*24 # how long between teoretical calculations
+    AU = 149.6e6*1000 
+    G = 6.67428e-11 
+    SCALE = 12 / AU 
+    MINI_SCALE = 100 /AU 
+    TIMESTEP = 3600*24 
     
     def __init__(self, x, y, radius, color, mass, app):
-        self.app = app # import the values from the main class
-        self.x = x # set self.x to x
-        self.y = y # set self.y to y
-        self.radius = radius # set self.radius to radius
-        self.color = color # set self.color to color
-        self.mass = mass # set self.mass to mass
-        self.ring = False # set self.ring to false so no rings
+        self.app = app 
+        self.x = x 
+        self.y = y 
+        self.radius = radius 
+        self.color = color 
+        self.mass = mass 
+        self.ring = False 
         
-        self.sun = False # is it the sun?
-        self.dist_to_sun = 0 # the distance from the sun to the object
+        self.sun = False 
+        self.dist_to_sun = 0 
         
-        self.x_vel = 0 # horizontal momentum
-        self.y_vel = 0 # vertical momentum
+        self.x_vel = 0 
+        self.y_vel = 0 
         
-    def draw(self, display, planet, planet_name, size): # draw function
+    def draw(self, display, planet, planet_name, size): 
         
-        # converts cordinats from 0,0 in top left corner to the center
+        
         x = self.x * self.SCALE + size[0] / 2 
         y = self.y * self.SCALE + size[1] / 2
         
-        pg.draw.circle(display, self.color, (x, y), self.radius) # draws the circle at the corect x and y coordinates
-        
-        if self.ring: # if the self.ring is true draw a ring in the same color as the planet with 1 pixel radius and 5 pixels wider
-            pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
-
-        if not self.sun: # if the object is not the sun
-            distance_text = self.app.FONT.render(f"{planet_name} - {round(self.dist_to_sun/self.AU, 3)}AU", 1, self.app.color["white"]) # save the distance text in a variable
-            display.blit(distance_text, (0, 32*(planet-1))) # display that variable with the corect planet name in the left corner
-    
-    def mini_draw(self, display, size):
-        # converts cordinats from 0,0 in top left corner to the center
-        x = self.x * self.MINI_SCALE + size[0] / 2 
-        y = self.y * self.MINI_SCALE + size[1] / 2
-        
-        # only draws the circle inside the mini sqere in the right corner
         if x > -20:
             pg.draw.circle(display, self.color, (x, y), self.radius)
         
-        if self.ring: # its the same as above that if the self.ring is true make a ring around the planet
+        if self.ring: 
+            pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
+
+        if not self.sun: 
+            distance_text = self.app.FONT.render(f"{planet_name} - {round(self.dist_to_sun/self.AU, 3)}AU", 1, self.app.color["white"]) 
+            display.blit(distance_text, (0, 32*(planet-1))) 
+    
+    def mini_draw(self, display, size):
+        
+        x = self.x * self.MINI_SCALE + size[0] / 2 
+        y = self.y * self.MINI_SCALE + size[1] / 2
+        
+        
+        if x > -20:
+            pg.draw.circle(display, self.color, (x, y), self.radius)
+        
+        if self.ring: 
             pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
 
         
     def attraction(self, other):
-        other_x, other_y = other.x, other.y # make local varaible from other object
-        distance_x = other_x - self.x # calulate the difrence between the curent planet and the other planet in the x
-        distance_y = other_y - self.y # calulate the difrence between the curent planet and the other planet in the y
-        distence = math.sqrt(distance_x ** 2 + distance_y ** 2) # pythagorean theorem to find the hypotenuse and then save it to a local variable
+        other_x, other_y = other.x, other.y 
+        distance_x = other_x - self.x 
+        distance_y = other_y - self.y 
+        distence = math.sqrt(distance_x ** 2 + distance_y ** 2) 
         
-        if other.sun: # if the other is the sun then
-            self.dist_to_sun = distence # save the distance variable to save it
+        if other.sun: 
+            self.dist_to_sun = distence 
             
-        force = self.G * self.mass * other.mass / distence**2 # calculate the force of the objects 
+        force = self.G * self.mass * other.mass / distence**2 
         
-        theta = math.atan2(distance_y, distance_x) # calculate the theta or the angle of tht x and y
-        force_x = math.cos(theta)* force # calculate how much movment on the x axis
-        force_y = math.sin(theta)* force # calculate how much movment on the y axis
-        return force_x, force_y # return the variables
+        theta = math.atan2(distance_y, distance_x) 
+        force_x = math.cos(theta)* force 
+        force_y = math.sin(theta)* force 
+        return force_x, force_y 
     
     def update(self, planets):
-        total_fx = total_fy = 0 # set the variables to 0
-        for planet in planets: # loop over all the planets
-            if self == planet: # if the self is equal to the planet then continue
+        total_fx = total_fy = 0
+        for planet in planets: 
+            if self == planet:
                 continue
             
-            fx, fy = self.attraction(planet) # use the attraction function
-            total_fx += fx # add the fx to the total_fx
-            total_fy += fy # add the fy to the total_fy
+            fx, fy = self.attraction(planet) 
+            total_fx += fx
+            total_fy += fy
             
-        self.x_vel += total_fx / self.mass * self.TIMESTEP # adds the horizontal momentum with the total force / by the mass of the planet and multiplied by the timestep so it will run a but faster
-        self.y_vel += total_fy / self.mass * self.TIMESTEP # the same as above but vertical
+        self.x_vel += total_fx / self.mass * self.TIMESTEP
+        self.y_vel += total_fy / self.mass * self.TIMESTEP
         
-        self.x += self.x_vel * self.TIMESTEP # add the momentum to the existing cordinates
-        self.y += self.y_vel * self.TIMESTEP # same as above
+        self.x += self.x_vel * self.TIMESTEP 
+        self.y += self.y_vel * self.TIMESTEP 
         
-        #self.orbit.append((self.x, self.y))
+        
         
 class App:
     def __init__(self):
-        pg.init() # so i can use the pygame visual library
+        pg.init() 
         
-        # dictonary of all the colors
+        
         self.color = {
             "white" : (255, 255, 255),
             "black" : (0, 0, 0),
@@ -102,10 +125,39 @@ class App:
             "dark-light-blue": (51, 143, 145)
         }
         
-        # the font i use
+        
         self.FONT = pg.font.SysFont("comicsans", 16)
         
-        # all info about the plantes
+        
+        
+        self.planets = []
+        self.planet_names = []
+        self.planetary_reset()
+        
+        self.rect_list = []
+        self.planet_boxes = []
+        
+        for i in range(0, len(self.planets)-1):
+            self.rect_list.append(pg.Rect(0,32*i+20, 200, 32))
+        for i in range(0, len(self.planets)-1):
+            self.planet_boxes.append(False)
+            
+        self.sun_lock = True 
+        
+        self.res = self.width, self.height = 1600, 900
+        self.clock = pg.time.Clock()
+        self.screen = pg.display.set_mode(self.res)
+        self.tool_bar = pg.Surface((self.width, 20))
+        self.main_display = pg.Surface((self.width, self.height-20))
+        self.display = pg.Surface((417,417))
+        
+        self.mouse_pressed = False
+        
+        self.planet_box = Planet_info()
+        
+        pg.display.set_caption("solar sim")
+    
+    def planetary_reset(self):
         star = Planet(0, 0, 20, self.color["yellow"], 1.98892e30, self)
         star.sun = True
         
@@ -136,43 +188,42 @@ class App:
         
         self.planets = [star, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
         self.planet_names = ["sun", "mercury", "venus","earth", "mars", "jupiter", "saturn", "uranus", "neptun"]
-        self.sun_lock = True # sun lock set to true if the sun should not move
-        
-        self.res = self.width, self.height = 1600, 900 # size of the screen
-        self.clock = pg.time.Clock()
-        self.screen = pg.display.set_mode(self.res)
-        self.display = pg.Surface((417,417))
-        pg.display.set_caption("solar sim")
     
     def run(self):
         while True:
-            self.screen.fill(self.color["black"])
+            self.main_display.fill(self.color["black"])
             self.display.fill(self.color["black"])
+            self.tool_bar.fill(self.color["white"])
             n = 0
-            if self.sun_lock: # sun lock to set the sun to 0,0
+            if self.sun_lock:
                 self.planets[0].x = 0
                 self.planets[0].y = 0
             
-            for planet in self.planets: # use all the functins in planet for every planet
+            for planet in self.planets:
                 planet.update(self.planets)
-                planet.draw(self.screen, n, self.planet_names[n], (900,900))
+                planet.draw(self.main_display, n, self.planet_names[n], (900,900))
                 planet.mini_draw(self.display, (417,417))
                 n += 1
-            pg.draw.rect(self.screen, self.color["gray"], (422,422,52,52))
-            pg.draw.rect(self.screen, self.color["black"], (423,423,50,50))
             
-            pg.draw.rect(self.screen, self.color["gray"], (1099,39,419,419))
-            self.screen.blit(self.display,(1100,40))
+            pg.draw.rect(self.main_display, self.color["gray"], (422,422,52,52))
+            pg.draw.rect(self.main_display, self.color["black"], (423,423,50,50))
             
+            pg.draw.rect(self.main_display, self.color["gray"], (1099,39,419,419))
+            self.main_display.blit(self.display,(1100,40))
+            self.screen.blit(self.tool_bar,(0,0))
+            self.screen.blit(self.main_display,(0,20))
             
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                    sys.exit()    
-                    
+                    sys.exit()
+                
+                self.planet_boxes = self.planet_box.check(self.rect_list, self.mouse_pressed, self.planet_names, self.planet_boxes)
+                
+            print(self.planet_boxes) 
             self.clock.tick()
-            pg.display.update()                        
-   
+            pg.display.update()
+
 if __name__ == "__main__":
     app = App()
     app.run()
