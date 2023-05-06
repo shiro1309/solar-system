@@ -20,7 +20,7 @@ class Planet:
     G = 6.67428e-11 
     SCALE = 12 / AU 
     MINI_SCALE = 100 /AU 
-    TIMESTEP = 3600*24 
+    TIMESTEP = 3600*24*10
     
     def __init__(self, x, y, radius, color, mass, app):
         self.app = app 
@@ -40,11 +40,12 @@ class Planet:
     def draw(self, display, planet, planet_name, size): 
         
         
-        x = self.x * self.SCALE + size[0] / 2 
+        x = self.x * self.SCALE + size[0] / 2
         y = self.y * self.SCALE + size[1] / 2
         
-        if x > -20:
-            pg.draw.circle(display, self.color, (x, y), self.radius)
+        if x >= 475 or x <= 425 or y >= 475 or y <= 425:
+            if x >= 0:
+                pg.draw.circle(display, self.color, (x, y), self.radius)
         
         if self.ring: 
             pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
@@ -58,8 +59,7 @@ class Planet:
         x = self.x * self.MINI_SCALE + size[0] / 2 
         y = self.y * self.MINI_SCALE + size[1] / 2
         
-        
-        if x > -20:
+        if x > 0:
             pg.draw.circle(display, self.color, (x, y), self.radius)
         
         if self.ring: 
@@ -125,30 +125,31 @@ class App:
         
         self.res = self.width, self.height = 1600, 900
         self.tool = self.tool_width, self.tool_height = self.width, 30
+        self.clock = pg.time.Clock()
+        self.screen = pg.display.set_mode(self.res)
+        self.main_display = pg.Surface((self.width, self.height-self.tool_height))
+        self.display = pg.Surface((417,417))
+        self.tool_bar = pg.Surface(self.tool)
+        
+        self.sun_lock = True
+        
         
         self.rect_list = []
         self.planet_boxes = []
         self.option_rects = []
+        self.tool_list = ["file", "edit", "view", "reset"]
+        self.tool_func = []
+        self.option_box_size = 50
         
+        for i in range(len(self.tool_list)):
+            self.tool_func.append(False)
         for i in range(0, len(self.planets)-1):
             self.rect_list.append(pg.Rect(0,32*i+20, 200, 32))
         for i in range(0, len(self.planets)-1):
             self.planet_boxes.append(False)
-        self.option_box_size = 50
-        for i in range(3):
+        for i in range(len(self.tool_list)):
             self.option_rects.append(pg.Rect(i*self.option_box_size, 0, self.option_box_size, self.tool_height))
-            
-        self.sun_lock = True 
         
-        
-        self.clock = pg.time.Clock()
-        self.screen = pg.display.set_mode(self.res)
-        self.tool_bar = pg.Surface(self.tool)
-        self.tool_list = ["file", "edit", "reset"]
-        self.tool_func = [False, False, False]
-        
-        self.main_display = pg.Surface((self.width, self.height-self.tool_height))
-        self.display = pg.Surface((417,417))
         
         self.mouse_pressed = False
         
@@ -183,7 +184,7 @@ class App:
         uranus.y_vel = -6.8e3
         
         neptune = Planet(30.13*Planet.AU, 0, 10, self.color["dark-light-blue"], 1.024e26, self)
-        neptune.y_vel = -2.43e3
+        neptune.y_vel = -5.43e3
         
         self.planets = [star, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
         self.planet_names = ["sun", "mercury", "venus","earth", "mars", "jupiter", "saturn", "uranus", "neptun"]
@@ -223,9 +224,11 @@ class App:
             elif self.tool_func[1]:
                 pass
             elif self.tool_func[2]:
+                pass
+            elif self.tool_func[3]:
                 self.planetary_reset()
             
-                
+            
             
             self.main_display.blit(self.display,(1100,40))
             self.screen.blit(self.tool_bar,(0,0))
@@ -238,7 +241,7 @@ class App:
                 
                 self.planet_boxes = self.planet_box.check(self.rect_list, self.mouse_pressed, self.planet_boxes)
                 
-            self.clock.tick()
+            self.clock.tick(60)
             pg.display.update()
 
 if __name__ == "__main__":
