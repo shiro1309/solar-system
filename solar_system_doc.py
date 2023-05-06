@@ -1,7 +1,7 @@
 import pygame as pg, math, sys
 
 class Planet_info:
-    def check(self, rect_list, pressed, planet_names, planet_box):
+    def check(self, rect_list, pressed, planet_box):
         n = 0
         for i in rect_list:
             if pg.Rect.collidepoint(i, pg.mouse.get_pos()) and pg.mouse.get_pressed()[0] and pressed == False:
@@ -15,12 +15,21 @@ class Planet_info:
             pressed = False
         return planet_box
 
-    def tool_bar(self, box_list, func_list, tool_bar_surf):
-        pass
+    def tool_bar(self, box_list, bool, tool_bar_surf):
+        rect = []
+        
+        for toll in range(len(box_list)):
+            rect.append(pg.Rect(toll*60,0,60,20))
+            self.box_click(pg.mouse.get_pos(), rect[toll], bool[toll])
+        print(pg.mouse.get_pos())
+        return bool
 
-    def box_click(self, point, box, func):
+    def box_click(self, point, box, var):
         if pg.Rect.collidepoint(box, point):
-            func()
+            var = True
+        else:
+            var = False
+        return var
 
 class Planet:
     AU = 149.6e6*1000 
@@ -111,7 +120,6 @@ class App:
     def __init__(self):
         pg.init() 
         
-        
         self.color = {
             "white" : (255, 255, 255),
             "black" : (0, 0, 0),
@@ -125,30 +133,37 @@ class App:
             "dark-light-blue": (51, 143, 145)
         }
         
-        
         self.FONT = pg.font.SysFont("comicsans", 16)
-        
-        
         
         self.planets = []
         self.planet_names = []
         self.planetary_reset()
         
+        self.res = self.width, self.height = 1600, 900
+        self.tool = self.tool_width, self.tool_height = self.width, 30
+        
         self.rect_list = []
         self.planet_boxes = []
+        self.option_rects = []
         
         for i in range(0, len(self.planets)-1):
             self.rect_list.append(pg.Rect(0,32*i+20, 200, 32))
         for i in range(0, len(self.planets)-1):
             self.planet_boxes.append(False)
+        self.option_box_size = 50
+        for i in range(3):
+            self.option_rects.append(pg.Rect(i*self.option_box_size, 0, self.option_box_size, self.tool_height))
             
         self.sun_lock = True 
         
-        self.res = self.width, self.height = 1600, 900
+        
         self.clock = pg.time.Clock()
         self.screen = pg.display.set_mode(self.res)
-        self.tool_bar = pg.Surface((self.width, 20))
-        self.main_display = pg.Surface((self.width, self.height-20))
+        self.tool_bar = pg.Surface(self.tool)
+        self.tool_list = ["file", "edit", "reset"]
+        self.tool_func = [False, False, False]
+        
+        self.main_display = pg.Surface((self.width, self.height-self.tool_height))
         self.display = pg.Surface((417,417))
         
         self.mouse_pressed = False
@@ -207,20 +222,41 @@ class App:
             
             pg.draw.rect(self.main_display, self.color["gray"], (422,422,52,52))
             pg.draw.rect(self.main_display, self.color["black"], (423,423,50,50))
-            
             pg.draw.rect(self.main_display, self.color["gray"], (1099,39,419,419))
+            
+            #self.tool_func = self.planet_box.tool_bar(self.tool_list, self.tool_func, self.tool_bar)
+            #print(self.tool_func)
+            for i in range(len(self.tool_list)):
+                info_box = self.FONT.render(f"{self.tool_list[i]}", 1, self.color["black"]) 
+                self.tool_bar.blit(info_box, (i*self.option_box_size+5, 5))
+                
+            for i in range(0, len(self.tool_list)):
+                if pg.Rect.collidepoint(self.option_rects[i],pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]:
+                    self.tool_func[i] = True
+                else:
+                    self.tool_func[i] = False
+            
+            if self.tool_func[0]:
+                pass
+            elif self.tool_func[1]:
+                pass
+            elif self.tool_func[2]:
+                self.planetary_reset()
+            
+                
+            
             self.main_display.blit(self.display,(1100,40))
             self.screen.blit(self.tool_bar,(0,0))
-            self.screen.blit(self.main_display,(0,20))
+            self.screen.blit(self.main_display,(0,self.tool_height))
             
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
                 
-                self.planet_boxes = self.planet_box.check(self.rect_list, self.mouse_pressed, self.planet_names, self.planet_boxes)
+                self.planet_boxes = self.planet_box.check(self.rect_list, self.mouse_pressed, self.planet_boxes)
                 
-            print(self.planet_boxes) 
+            #print(self.planet_boxes) 
             self.clock.tick()
             pg.display.update()
 
