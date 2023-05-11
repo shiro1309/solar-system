@@ -20,7 +20,7 @@ class Planet:
     G = 6.67428e-11 
     SCALE = 12 / AU 
     MINI_SCALE = 100 /AU 
-    TIMESTEP = 3600*24*10
+    TIMESTEP = 3600*24
     
     def __init__(self, x, y, radius, color, mass, app):
         self.app = app 
