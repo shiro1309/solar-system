@@ -210,7 +210,7 @@ class App:
             pg.draw.rect(self.main_display, self.color["gray"], (1099,39,419,419))
             
             for i in range(len(self.tool_list)):
-                info_box = self.FONT.render(f"{self.tool_list[i]}", 1, self.color["black"]) 
+                info_box = self.FONT.render(f"{self.tool_list[i]}", 1, self.color["black"])
                 self.tool_bar.blit(info_box, (i*self.option_box_size+5, 5))
                 
             for i in range(0, len(self.tool_list)):
