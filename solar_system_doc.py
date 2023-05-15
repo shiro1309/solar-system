@@ -14,46 +14,51 @@ class Planet_info:
         if pg.mouse.get_pressed()[0] == False:
             pressed = False
         return planet_box
-
-class Planet:
-    AU = 149.6e6*1000 
-    G = 6.67428e-11 
-    SCALE = 12 / AU 
-    MINI_SCALE = 100 /AU 
-    TIMESTEP = 3600*24
     
+# planet class where all that is about the planet is hapening
+class Planet:
+    AU = 149.6e6*1000 # AU in meters
+    G = 6.67428e-11 # gravitatinal constant
+    SCALE = 12 / AU # big screen pixel AU ratio where every 12 pixel is 1 AU
+    MINI_SCALE = 100 /AU # same as above but 100 pixels per 1 AU
+    TIMESTEP = 3600*24 # timesetp how many seconds it is between calculations
+    
+    # init class that happens when you call Plannet in the main loop
     def __init__(self, x, y, radius, color, mass, app):
-        self.app = app 
+        self.app = app # takes a copy of all the variables in the main class App
         self.x = x 
         self.y = y 
         self.radius = radius 
         self.color = color 
         self.mass = mass 
-        self.ring = False 
+        self.ring = False # if there is a ring
         
-        self.sun = False 
-        self.dist_to_sun = 0 
+        self.sun = False # if its the sun
+        self.dist_to_sun = 0 # distance to sun
         
+        # x, y velocity
         self.x_vel = 0 
         self.y_vel = 0 
         
     def draw(self, display, planet, planet_name, size): 
         
-        
+        # goes from a corner based cordinates system to a center based system sun is 0,0
         x = self.x * self.SCALE + size[0] / 2
         y = self.y * self.SCALE + size[1] / 2
         
+        # check if the planet is outside of the small sqere in the center of the planetary scene
         if x >= 475 or x <= 425 or y >= 475 or y <= 425:
-            if x >= 0:
-                pg.draw.circle(display, self.color, (x, y), self.radius)
+            if x >= 0: # if its not outside of the big sqere then it can draw the planet
+                pg.draw.circle(display, self.color, (x, y), self.radius) # draw a circle based on the planet atributes
         
-        if self.ring: 
+        if self.ring: # if ring is true for the planet then draw a ring autside the planet
             pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
 
-        if not self.sun: 
-            distance_text = self.app.FONT.render(f"{planet_name} - {round(self.dist_to_sun/self.AU, 3)}AU", 1, self.app.color["white"]) 
-            display.blit(distance_text, (0, 32*(planet-1))) 
+        if not self.sun: # if the planet is not the sun then save the distance and draw it to the screen
+            distance_text = self.app.FONT.render(f"{planet_name} - {round(self.dist_to_sun/self.AU, 3)}AU", 1, self.app.color["white"]) # calculates the distance between the planet and the sun and saves it into a string
+            display.blit(distance_text, (0, 32*(planet-1))) # render the string at the appropriate location on the top left of the screen
     
+    # same as above but for the planets inside the smaller square
     def mini_draw(self, display, size):
         
         x = self.x * self.MINI_SCALE + size[0] / 2 
@@ -65,36 +70,44 @@ class Planet:
         if self.ring: 
             pg.draw.circle(display, self.color, (x, y), self.radius+5, 1)
 
-        
+    # calculates the gravitatinal force on the planet in comparizon to 1 of the other planets    
     def attraction(self, other):
-        other_x, other_y = other.x, other.y 
-        distance_x = other_x - self.x 
-        distance_y = other_y - self.y 
-        distence = math.sqrt(distance_x ** 2 + distance_y ** 2) 
+        other_x, other_y = other.x, other.y # save as local variables
+        distance_x = other_x - self.x # calculate the distance between the planets on the x axis
+        distance_y = other_y - self.y # calculate the distance between the planets on the y axis
+        distence = math.sqrt(distance_x ** 2 + distance_y ** 2) # pythagoras theorem to get the distance between the planets
         
+        # if the other planet is the sun then note it down for later rendering
         if other.sun: 
             self.dist_to_sun = distence 
-            
+        # graviditets formelen
         force = self.G * self.mass * other.mass / distence**2 
+        # the force is equal to the gravitatinal constant multiplied by the mass multiplied by the mass devided by the distance squered
         
-        theta = math.atan2(distance_y, distance_x) 
-        force_x = math.cos(theta)* force 
-        force_y = math.sin(theta)* force 
-        return force_x, force_y 
+        
+        theta = math.atan2(distance_y, distance_x) # regner ut gradene ut ifra avstanden fra planeten til den andre planeten
+        force_x = math.cos(theta)* force # ny lengde x
+        force_y = math.sin(theta)* force # ny lengde y
+        return force_x, force_y # retunrerer x, y
     
+    # update the x and y position based on the gravitatinal force exerted on that planet
     def update(self, planets):
         total_fx = total_fy = 0
+        # lopps over all the planets exept itself
         for planet in planets: 
             if self == planet:
                 continue
             
+            # adds the distance calculated from the attraction and adds it to the total force_x and y
             fx, fy = self.attraction(planet) 
             total_fx += fx
             total_fy += fy
-            
+        
+        # velocity is equal to itself + total_f / its mass multiplied by the time step    
         self.x_vel += total_fx / self.mass * self.TIMESTEP
         self.y_vel += total_fy / self.mass * self.TIMESTEP
         
+        # add the previus values multiplied by the timestep to the x and y of the planet
         self.x += self.x_vel * self.TIMESTEP 
         self.y += self.y_vel * self.TIMESTEP 
         
@@ -142,7 +155,7 @@ class App:
         self.tool_func = []
         self.option_box_size = 50
         
-        # 
+        # configure the list for later use
         for i in range(len(self.tool_list)):
             self.tool_func.append(False)
         for i in range(0, len(self.planets)-1):
